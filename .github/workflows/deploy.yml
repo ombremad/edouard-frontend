@@ -5,11 +5,13 @@ on:
     branches: [main]
   workflow_dispatch:
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    environment: production
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
 
+jobs:
+  build:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -24,17 +26,53 @@ jobs:
         env:
           NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL }}
 
-      - name: Deploy
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: out/
+          retention-days: 7
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Validate SFTP_PATH
+        env:
+          SFTP_PATH: ${{ vars.OVH_SFTP_PATH }}
+        run: |
+          if [ -z "$SFTP_PATH" ] || [ "$SFTP_PATH" = "." ] || [ "$SFTP_PATH" = "/" ] || [ "$SFTP_PATH" = "~" ] || [[ "$SFTP_PATH" == /home/* ]]; then
+            echo "Refusing to deploy: SFTP_PATH='$SFTP_PATH' is too broad."
+            exit 1
+          fi
+          echo "SFTP_PATH validated: $SFTP_PATH"
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: out/
+
+      - name: Pin OVH host key
+        env:
+          SFTP_KNOWN_HOSTS: ${{ secrets.OVH_SFTP_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SFTP_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Deploy out/ to OVH via SFTP
         env:
           SFTP_HOST: ${{ secrets.OVH_SFTP_HOST }}
           SFTP_USER: ${{ secrets.OVH_SFTP_USER }}
           SFTP_PASSWORD: ${{ secrets.OVH_SFTP_PASSWORD }}
-          SFTP_PATH: ${{ secrets.OVH_SFTP_PATH }}
+          SFTP_PATH: ${{ vars.OVH_SFTP_PATH }}
         run: |
-          lftp -c "
-            set sftp:auto-confirm yes;
-            set net:max-retries 2;
-            set net:timeout 30;
-            open -u '$SFTP_USER','$SFTP_PASSWORD' sftp://$SFTP_HOST;
-            mirror --reverse --delete --verbose --parallel=4 out/ '$SFTP_PATH';
-          "
+          lftp <<EOF
+          set sftp:connect-program "ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts"
+          set net:max-retries 2
+          set net:timeout 30
+          open -u "$SFTP_USER","$SFTP_PASSWORD" sftp://$SFTP_HOST
+          mirror --reverse --delete --dry-run --verbose --parallel=4 out/ "$SFTP_PATH"
+          bye
+          EOF
