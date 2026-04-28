@@ -52,6 +52,11 @@ jobs:
           name: site
           path: out/
 
+      - name: Install lftp
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lftp
+
       - name: Pin OVH host key
         env:
           SFTP_KNOWN_HOSTS: ${{ secrets.OVH_SFTP_KNOWN_HOSTS }}
