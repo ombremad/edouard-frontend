@@ -30,12 +30,12 @@ export default function StartGame({ onStart, loading }: Props) {
       <div className="w-full max-w-xl space-y-10 text-center">
 
         <div className="space-y-3">
-          <span aria-hidden className="block text-gray-400 dark:text-gray-600 text-xl">❖</span>
+          <span aria-hidden className="block text-4xl text-gray-400 dark:text-gray-600">🪦</span>
           <h1 className="text-6xl font-bold tracking-[0.15em] text-gray-900 dark:text-white">
             ÉDOUARD
           </h1>
           <p className="italic text-gray-500 dark:text-gray-400">
-            Le jeu du « il est mort lui ou pas ? »
+            Un jeu rigolo à propos de la mort.
           </p>
         </div>
 
