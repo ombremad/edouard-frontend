@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/Button";
 import { FieldInput, FieldLabel } from "@/components/ui/Field";
+import { createUser } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -13,21 +14,31 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState<"login" | "signup">("login");
 
-  async function handleSubmit(event: SubmitEvent) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
     setLoading(true);
     try {
-      await login({ email, password });
+      if (mode === "login") {
+        await login({ email, password });
+      } else {
+        await createUser({ email, password });
+        await login({ email, password });
+      }
       router.replace("/game");
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error("Login failed:", err);
       setError(message || "Échec de la connexion.");
     } finally {
       setLoading(false);
     }
+  }
+
+  function toggleMode() {
+    setError("");
+    setMode(mode === "login" ? "signup" : "login")
   }
 
   return (
@@ -62,10 +73,17 @@ export default function LoginPage() {
           </div>
           {error && <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>}
           <Button type="submit" disabled={loading} className="w-full py-2 px-4">
-            {loading ? "Connexion…" : "Se connecter"}
+            {loading ? "Connexion" :
+              mode === "login" ? "Se connecter" : "Créer un compte"
+            }
           </Button>
+          <p className="underline text-center mt-2 text-gray-500 dark:text-gray-400">
+            <a onClick={toggleMode}>
+              {mode === "login" ? "Pas encore de compte ?" : "Déjà un compte ?"}
+            </a>
+          </p>
         </form>
       </div>
-    </div>
+    </div >
   );
 }
