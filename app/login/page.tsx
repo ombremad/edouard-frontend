@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { FieldInput, FieldLabel } from "@/components/ui/Field";
 import { useAuth } from "@/lib/auth";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { useState } from "react";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -14,7 +14,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(event: FormEvent) {
+  async function handleSubmit(event: SubmitEvent) {
     event.preventDefault();
     setError("");
     setLoading(true);
