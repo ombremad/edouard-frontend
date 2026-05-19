@@ -50,7 +50,7 @@ export default function ResultsScreen({ results, onPlayAgain }: Props) {
           onClick={onPlayAgain}
           className="w-full py-3 px-6 rounded-xl text-lg font-bold"
         >
-          Rejouer
+          Retour au menu
         </Button>
       </div>
     </div>

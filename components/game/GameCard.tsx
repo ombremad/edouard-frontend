@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { GetGameQuestionDto, GetGameAnswerDto } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
-import { GuessButton } from "@/components/ui/GuessButton";
 import { FeedbackBanner } from "@/components/ui/FeedbackBanner";
+import { GuessButton } from "@/components/ui/GuessButton";
 import { Spinner } from "@/components/ui/Spinner";
+import { GetGameAnswerDto, GetGameQuestionDto } from "@/lib/api";
+import { useEffect, useState } from "react";
 
 interface Props {
   question: GetGameQuestionDto;
@@ -42,17 +42,9 @@ export default function GameCard({
   const isLoadingNextQuestion = loading && !!answer;
   const showSpinner = isLoadingNextQuestion || !person.imageUrl || !imageLoaded;
 
-  const bannerState: "correct" | "wrong" | "placeholder" = answer
-    ? answer.correct
-      ? "correct"
-      : "wrong"
-    : "placeholder";
-
-  const bannerText = answer
-    ? answer.correct
-      ? "Bonne réponse !"
-      : "Mauvaise réponse !"
-    : " ";
+  const banner: { state: "correct" | "wrong" | "placeholder", text: string } = answer
+    ? { state: answer.correct ? "correct" : "wrong", text: answer.correct ? "Bonne réponse !" : "Mauvaise réponse !" }
+    : { state: "placeholder", text: " " };
 
   return (
     <div className="flex flex-1 items-center justify-center">
@@ -73,7 +65,6 @@ export default function GameCard({
 
         <div className="relative w-full aspect-square bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden flex items-center justify-center">
           {person.imageUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={person.imageUrl}
               alt={person.name}
@@ -97,7 +88,7 @@ export default function GameCard({
             </p>
           </div>
 
-          <div className={`h-[4rem] pt-2 space-y-1 text-base text-gray-500 dark:text-gray-400 ${answer ? "" : "invisible"}`}>
+          <div className={`transition-all duration-300 ease-in-out overflow-hidden ${answer ? "max-h-24 opacity-100" : "max-h-0 opacity-0"}`}>
             {answer && (
               answer.person.isDead ? (
                 <>
@@ -120,23 +111,11 @@ export default function GameCard({
           </div>
         </div>
 
-        <FeedbackBanner state={bannerState}>{bannerText}</FeedbackBanner>
+        <FeedbackBanner state={banner.state}>{banner.text}</FeedbackBanner>
 
-        <div className="grid grid-cols-2 gap-4">
-          {answer ? (
-            <Button
-              onClick={isLastQuestion ? onEnd : onNext}
-              disabled={loading}
-              className="col-span-2 py-3 rounded-2xl text-xl font-bold"
-            >
-              {loading
-                ? "Chargement…"
-                : isLastQuestion
-                ? "Voir les résultats"
-                : "Question suivante"}
-            </Button>
-          ) : (
-            <>
+        <div className="relative h-14">
+          <div className={`absolute inset-0 transition-opacity duration-200 ${answer ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
+            <div className="grid grid-cols-2 gap-4">
               <GuessButton
                 variant="alive"
                 onClick={() => onAnswer(false)}
@@ -153,8 +132,21 @@ export default function GameCard({
               >
                 Mort·e
               </GuessButton>
-            </>
-          )}
+            </div>
+          </div>
+          <div className={`absolute inset-0 transition-opacity duration-200 ${answer ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+            <Button
+              onClick={isLastQuestion ? onEnd : onNext}
+              disabled={loading}
+              className="w-full py-3 text-xl font-bold"
+            >
+              {loading
+                ? "Chargement…"
+                : isLastQuestion
+                  ? "Voir les résultats"
+                  : "Question suivante"}
+            </Button>
+          </div>
         </div>
 
       </div>

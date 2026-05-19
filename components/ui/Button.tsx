@@ -17,7 +17,7 @@ export function Button({ variant = "primary", className = "", ...rest }: Props) 
   return (
     <button
       {...rest}
-      className={`rounded-lg font-semibold transition-colors ${VARIANT_CLASSES[variant]} ${className}`}
+      className={`rounded-2xl font-semibold transition-colors ${VARIANT_CLASSES[variant]} ${className}`}
     />
   );
 }

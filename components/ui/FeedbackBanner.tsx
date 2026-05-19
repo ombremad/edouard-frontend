@@ -17,7 +17,7 @@ export function FeedbackBanner({ state, className = "", children, ...rest }: Pro
   return (
     <div
       {...rest}
-      className={`rounded-2xl p-4 text-center font-bold text-xl border transition-opacity duration-200 ${STATE_CLASSES[state]} ${className}`}
+      className={`rounded-2xl p-4 text-center font-bold text-xl border transition-colors duration-300 ${STATE_CLASSES[state]} ${className}`}
     >
       {children}
     </div>
